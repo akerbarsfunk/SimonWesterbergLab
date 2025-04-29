@@ -1,64 +1,43 @@
 package com.example.demo.controller;
-import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.service.MemberService;
 import com.example.demo.model.Member;
-import com.example.demo.repository.MemberRepository;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 @RestController
 @RequestMapping("/admin")
 public class MemberController {
 
-    private final MemberRepository memberRepository;
+    private final MemberService memberService;
 
-    public MemberController(MemberRepository memberRepository) {
-        this.memberRepository = memberRepository;
+    public MemberController(MemberService memberService) {
+        this.memberService = memberService;
     }
-
 
     @GetMapping("/members")
     public List<Member> getAllMembers() {
-        return memberRepository.findAll();
+        return memberService.getAllMembers();
     }
-
 
     @GetMapping("/member/{id}")
     public ResponseEntity<Member> getMemberById(@PathVariable Long id) {
-        return memberRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElseThrow(() -> new ResourceNotFoundException("Medlem med id " + id + " hittades inte."));
+        return ResponseEntity.ok(memberService.getMemberById(id));
     }
-
 
     @PostMapping("/addmember")
     public ResponseEntity<Member> addMember(@RequestBody Member member) {
-        Member saved = memberRepository.save(member);
-        return ResponseEntity.ok(saved);
+        return ResponseEntity.ok(memberService.addMember(member));
     }
-
 
     @PutMapping("/updatemember/{id}")
     public ResponseEntity<Member> updateMember(@PathVariable Long id, @RequestBody Member updatedMember) {
-        return memberRepository.findById(id).map(existing -> {
-            existing.setFirstName(updatedMember.getFirstName());
-            existing.setLastName(updatedMember.getLastName());
-            existing.setAddress(updatedMember.getAddress());
-            existing.setEmail(updatedMember.getEmail());
-            existing.setPhone(updatedMember.getPhone());
-            existing.setDateOfBirth(updatedMember.getDateOfBirth());
-            memberRepository.save(existing);
-            return ResponseEntity.ok(existing);
-        }).orElseThrow(() -> new ResourceNotFoundException("Medlem med id " + id + " kunde inte uppdateras."));
+        return ResponseEntity.ok(memberService.updateMember(id, updatedMember));
     }
-
 
     @DeleteMapping("/deletemember/{id}")
     public ResponseEntity<String> deleteMember(@PathVariable Long id) {
-        if (!memberRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Medlem med id " + id + " kunde inte hittas för borttagning.");
-        }
-        memberRepository.deleteById(id);
+        memberService.deleteMember(id);
         return ResponseEntity.ok("Medlem borttagen");
     }
 }
